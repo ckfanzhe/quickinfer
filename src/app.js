@@ -203,6 +203,19 @@ function toggleWebcam() {
 
 // Initialize the application
 function init() {
+  // Check if ONNX Runtime is loaded
+  if (!window.ort || window.ortLoadError) {
+    updateModelStatus('error', 'ONNX Runtime failed to load. Check network connection.');
+    showToast('Failed to load ONNX Runtime. Please refresh the page.', 'error');
+    return;
+  }
+
+  // Configure ONNX Runtime Web
+  window.ort.env.wasm.wasmPath = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/';
+  window.ort.env.wasm.numThreads = 1;
+  window.ort.env.wasm.simd = false;
+  window.ort.env.webgpu.devicePreference = 'default';
+
   // Setup event handlers
   setupEventHandlers(state, {
     onFileSelect: () => {
