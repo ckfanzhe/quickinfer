@@ -2,6 +2,15 @@ import { loadModelFromCache, saveModelToCache } from './model-cache.js';
 
 // Use ONNX Runtime from global window (loaded via script tag in index.html)
 
+// Model Configuration - Update these for GitHub Pages deployment
+// For GitHub Releases: use jsDelivr CDN format
+// e.g., https://cdn.jsdelivr.net/gh/YOUR_USER/YOUR_REPO@1.0.0/models/yolov8s.onnx
+const MODEL_CONFIG = {
+  // GitHub repo for CDN models - UPDATE THIS after creating GitHub Releases
+  cdnBase: import.meta.env.VITE_CDN_BASE || '',
+  models: import.meta.env.VITE_MODELS ? JSON.parse(import.meta.env.VITE_MODELS) : []
+};
+
 // App State
 const state = {
   session: null,
@@ -148,21 +157,32 @@ function checkReadyState() {
 
 // Server Models
 async function fetchServerModels() {
+  // Combine CDN models (from env) and local server models
+  const cdnModels = MODEL_CONFIG.models.map(m => ({
+    name: m.name,
+    url: MODEL_CONFIG.cdnBase + m.path,
+    sizeFormatted: m.size || '~12MB'
+  }));
+
   try {
     const response = await fetch('/api/models');
-    if (!response.ok) throw new Error('Failed to fetch');
-    const data = await response.json();
-    state.serverModels = data.models || [];
-    renderModelList();
-  } catch (error) {
-    console.error('Fetch models error:', error);
-    elements.modelList.innerHTML = '<div class="model-error">Failed to load models from server</div>';
+    if (response.ok) {
+      const data = await response.json();
+      state.serverModels = [...cdnModels, ...(data.models || [])];
+    } else {
+      // Server not available, use CDN models only
+      state.serverModels = cdnModels;
+    }
+  } catch {
+    // Server not available, use CDN models only
+    state.serverModels = cdnModels;
   }
+  renderModelList();
 }
 
 function renderModelList() {
   if (state.serverModels.length === 0) {
-    elements.modelList.innerHTML = '<div class="model-empty">No models available on server</div>';
+    elements.modelList.innerHTML = '<div class="model-empty">No models available</div>';
     return;
   }
 

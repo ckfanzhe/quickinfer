@@ -6,7 +6,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   root: path.join(__dirname, 'src'),
-  base: '/',
+  // base: '/quickinfer/' for GitHub Pages subpath, '/' for root
+  base: process.env.VITE_BASE_PATH || '/',
   build: {
     outDir: path.join(__dirname, 'dist'),
     emptyOutDir: true
