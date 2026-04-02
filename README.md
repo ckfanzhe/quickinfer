@@ -8,9 +8,11 @@ Browser-based YOLOv8 inference benchmark using ONNX Runtime Web.
 
 - Run YOLOv8 object detection directly in the browser
 - Support for multiple backends: Auto, WASM (CPU), WebGPU, WebGL
-- Multiple model sizes: YOLOv8s, YOLOv8m, YOLOv8l, YOLOv8x
+- Multiple model sizes: YOLOv8n, YOLOv8s, YOLOv8m, YOLOv8l, YOLOv8x
 - Real-time performance metrics: preprocessing, inference, postprocessing
 - Download progress bar for model loading
+- Built-in example images for quick testing
+- Responsive design for mobile devices
 - Export detection results as JSON
 
 ## Usage
@@ -37,6 +39,7 @@ The built files will be in the `dist` directory.
 Models are hosted on [ModelScope](https://www.modelscope.cn) to ensure proper CORS support for browser downloads.
 
 Default models:
+- YOLOv8n (~6MB)
 - YOLOv8s (~43MB)
 - YOLOv8m (~99MB)
 - YOLOv8l (~167MB)

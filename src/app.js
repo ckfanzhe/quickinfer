@@ -65,8 +65,6 @@ const elements = {
   exportBtn: $('exportBtn'),
   resultsSection: $('resultsSection'),
   resultsCanvas: $('resultsCanvas'),
-  detectionCount: $('detectionCount'),
-  detectionsList: $('detectionsList'),
   toastContainer: $('toastContainer'),
   examplesGrid: $('examplesGrid')
 };
@@ -713,18 +711,6 @@ function displayResults(canvas, detections) {
 
   // Mark as displayed
   state.displayScale.displayed = true;
-
-  // Show detection count and list below
-  elements.resultsSection.style.display = 'block';
-  elements.detectionCount.textContent = `${detections.length} object${detections.length !== 1 ? 's' : ''} detected`;
-
-  // Update detections list
-  elements.detectionsList.innerHTML = detections.map(d => `
-    <div class="detection-item">
-      <span class="class-name">${d.className}</span>
-      <span class="confidence">${(d.confidence * 100).toFixed(1)}%</span>
-    </div>
-  `).join('');
 }
 
 function exportResults() {
