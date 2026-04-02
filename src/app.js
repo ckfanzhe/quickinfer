@@ -3,7 +3,7 @@ import { loadModelFromCache, saveModelToCache } from './model-cache.js';
 // Use ONNX Runtime from global window (loaded via script tag in index.html)
 
 // Model URLs - built at compile time via vite define
-// Format: raw.githubusercontent.com URL for CORS support
+// Format: ModelScope URL for CORS support
 const MODEL_URLS = import.meta.env.VITE_MODEL_URLS || '[]';
 
 // App State
