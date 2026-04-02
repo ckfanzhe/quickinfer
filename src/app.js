@@ -153,26 +153,14 @@ function checkReadyState() {
   updateRunButton(ready);
 }
 
-// Server Models
-async function fetchServerModels() {
+// Server Models - fully static, no server API needed
+function fetchServerModels() {
   // Build GitHub Release URLs for models
-  const releaseModels = MODEL_CONFIG.models.map(m => ({
+  state.serverModels = MODEL_CONFIG.models.map(m => ({
     name: m.name,
     url: `https://github.com/${MODEL_CONFIG.repo}/releases/download/${MODEL_CONFIG.release}/${m.name}`,
     sizeFormatted: m.size || '~12MB'
   }));
-
-  try {
-    const response = await fetch('/api/models');
-    if (response.ok) {
-      const data = await response.json();
-      state.serverModels = [...releaseModels, ...(data.models || [])];
-    } else {
-      state.serverModels = releaseModels;
-    }
-  } catch {
-    state.serverModels = releaseModels;
-  }
   renderModelList();
 }
 
