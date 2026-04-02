@@ -3,6 +3,7 @@ import { loadModelFromCache, saveModelToCache } from './model-cache.js';
 // Use ONNX Runtime from global window (loaded via script tag in index.html)
 
 // Model URLs - built at compile time via vite define
+// Format: raw.githubusercontent.com URL for CORS support
 const MODEL_URLS = import.meta.env.VITE_MODEL_URLS || '[]';
 
 // App State
@@ -186,21 +187,21 @@ async function selectServerModel(item) {
   elements.modelList.querySelectorAll('.model-item').forEach(i => i.classList.remove('selected'));
   item.classList.add('selected', 'loading');
 
-  const url = item.dataset.url;
   const name = item.dataset.name;
+  const url = item.dataset.url;
 
   updateModelStatus('loading', 'Loading...');
 
   try {
     let modelBuffer;
 
-    // Try cache first
+    // Try cache first (using URL as cache key)
     const cached = await loadModelFromCache(url);
     if (cached) {
       modelBuffer = cached;
       showToast('Model loaded from cache', 'success');
     } else {
-      // Download
+      // Download from raw.githubusercontent.com (CORS-enabled)
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       modelBuffer = await response.arrayBuffer();
@@ -227,7 +228,11 @@ async function selectServerModel(item) {
   } catch (error) {
     console.error('Load error:', error);
     updateModelStatus('error', 'Error');
-    showToast(`Failed to load model: ${error.message}`, 'error');
+    if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+      showToast('Download blocked. Use "Upload Local ONNX" instead.', 'error');
+    } else {
+      showToast(`Failed to load model: ${error.message}`, 'error');
+    }
   } finally {
     item.classList.remove('loading');
   }

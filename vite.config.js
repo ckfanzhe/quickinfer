@@ -6,12 +6,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, '');
-  const repo = env.VITE_GITHUB_REPO || 'ckfanzhe/quickinfer';
-  const release = env.VITE_RELEASE_TAG || 'v1.0.0';
+  // Separate model repo using Git LFS
+  const modelRepo = env.VITE_MODEL_REPO || 'ckfanzhe/quick-infer-models';
+  const modelBranch = env.VITE_MODEL_BRANCH || 'main';
   const modelList = JSON.parse(env.VITE_MODELS || '[]');
   const modelUrls = JSON.stringify(modelList.map(m => ({
     name: m.name,
-    url: `https://github.com/${repo}/releases/download/${release}/${m.name}`,
+    url: `https://raw.githubusercontent.com/${modelRepo}/${modelBranch}/${m.name}`,
     sizeFormatted: m.size || '~12MB'
   })));
   // Use relative paths for local dev, absolute /quickinfer/ for github build
@@ -20,8 +21,8 @@ export default defineConfig(({ mode }) => {
     root: path.join(__dirname, 'src'),
     base: isGitHubBuild ? '/quickinfer/' : './',
     define: {
-      'import.meta.env.VITE_GITHUB_REPO': JSON.stringify(repo),
-      'import.meta.env.VITE_RELEASE_TAG': JSON.stringify(release),
+      'import.meta.env.VITE_MODEL_REPO': JSON.stringify(modelRepo),
+      'import.meta.env.VITE_MODEL_BRANCH': JSON.stringify(modelBranch),
       'import.meta.env.VITE_MODEL_URLS': modelUrls
     },
     build: {
