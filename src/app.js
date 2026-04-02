@@ -2,12 +2,8 @@ import { loadModelFromCache, saveModelToCache } from './model-cache.js';
 
 // Use ONNX Runtime from global window (loaded via script tag in index.html)
 
-// Model Configuration - GitHub Release URLs
-const MODEL_CONFIG = {
-  repo: import.meta.env.VITE_GITHUB_REPO || 'ckfanzhe/quickinfer',
-  release: import.meta.env.VITE_RELEASE_TAG || 'v1.0.0',
-  models: import.meta.env.VITE_MODELS ? JSON.parse(import.meta.env.VITE_MODELS) : []
-};
+// Model URLs - built at compile time via vite define
+const MODEL_URLS = import.meta.env.VITE_MODEL_URLS || '[]';
 
 // App State
 const state = {
@@ -156,11 +152,11 @@ function checkReadyState() {
 // Server Models - fully static, no server API needed
 function fetchServerModels() {
   // Build GitHub Release URLs for models
-  state.serverModels = MODEL_CONFIG.models.map(m => ({
-    name: m.name,
-    url: `https://github.com/${MODEL_CONFIG.repo}/releases/download/${MODEL_CONFIG.release}/${m.name}`,
-    sizeFormatted: m.size || '~12MB'
-  }));
+  try {
+    state.serverModels = JSON.parse(MODEL_URLS);
+  } catch {
+    state.serverModels = [];
+  }
   renderModelList();
 }
 

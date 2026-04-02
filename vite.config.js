@@ -6,9 +6,22 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, '');
+  const repo = env.VITE_GITHUB_REPO || 'ckfanzhe/quickinfer';
+  const release = env.VITE_RELEASE_TAG || 'v1.0.0';
+  const modelList = JSON.parse(env.VITE_MODELS || '[]');
+  const modelUrls = JSON.stringify(modelList.map(m => ({
+    name: m.name,
+    url: `https://github.com/${repo}/releases/download/${release}/${m.name}`,
+    sizeFormatted: m.size || '~12MB'
+  })));
   return {
     root: path.join(__dirname, 'src'),
     base: env.VITE_BASE_PATH || '/',
+    define: {
+      'import.meta.env.VITE_GITHUB_REPO': JSON.stringify(repo),
+      'import.meta.env.VITE_RELEASE_TAG': JSON.stringify(release),
+      'import.meta.env.VITE_MODEL_URLS': modelUrls
+    },
     build: {
       outDir: path.join(__dirname, 'dist'),
       emptyOutDir: true
