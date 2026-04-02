@@ -2,6 +2,8 @@
 
 Browser-based YOLOv8 inference benchmark using ONNX Runtime Web.
 
+![ONNX YOLO Benchmark](screenshot.png)
+
 ## Features
 
 - Run YOLOv8 object detection directly in the browser
