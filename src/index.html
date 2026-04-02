@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ONNX YOLO Benchmark</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-scanline"></div>
+      <div class="header-content">
+        <div class="logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect x="2" y="2" width="36" height="36" rx="4" stroke="#00ff88" stroke-width="2"/>
+            <path d="M10 20h20M20 10v20" stroke="#00ccff" stroke-width="2"/>
+            <circle cx="20" cy="20" r="8" stroke="#00ff88" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1>ONNX YOLO Benchmark</h1>
+          <p class="subtitle">Browser-based Inference Performance Testing</p>
+        </div>
+        <div class="model-status" id="modelStatus">
+          <span class="status-dot"></span>
+          <span class="status-text">Model: Not Loaded</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="workspace">
+        <section class="upload-section">
+          <div class="upload-zone" id="uploadZone">
+            <div class="upload-placeholder" id="uploadPlaceholder">
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                <rect x="8" y="16" width="48" height="40" rx="4" stroke="#8888aa" stroke-width="2"/>
+                <path d="M8 44l16-16 12 12 12-12 8 8" stroke="#00ccff" stroke-width="2"/>
+                <circle cx="24" cy="28" r="6" stroke="#00ff88" stroke-width="2"/>
+              </svg>
+              <p class="upload-text">Drag & drop image here</p>
+              <p class="upload-subtext">or click to browse</p>
+              <p class="upload-formats">JPG, PNG, WEBP, BMP (max 10MB)</p>
+            </div>
+            <div class="image-preview" id="imagePreview" style="display: none;">
+              <canvas id="previewCanvas"></canvas>
+              <button class="clear-image-btn" id="clearImageBtn">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" hidden>
+        </section>
+
+        <aside class="control-panel">
+          <div class="panel-section">
+            <h3 class="panel-title">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <rect x="1" y="1" width="16" height="16" rx="2" stroke="#00ccff" stroke-width="1.5"/>
+                <path d="M5 9h8M9 5v8" stroke="#00ccff" stroke-width="1.5"/>
+              </svg>
+              Model Selection
+            </h3>
+            <div class="server-models">
+              <label class="preset-label">Server Models</label>
+              <div class="model-list" id="modelList">
+                <div class="model-loading">Loading models...</div>
+              </div>
+            </div>
+            <div class="divider">
+              <span>OR</span>
+            </div>
+            <div class="local-model">
+              <label class="preset-label">Upload Local ONNX</label>
+              <button class="local-model-btn" id="localModelBtn">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect x="2" y="6" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M6 6V4a2 2 0 012-2h2a2 2 0 012 2v2M9 9v4" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+                Choose ONNX File...
+              </button>
+              <input type="file" id="onnxFileInput" accept=".onnx" hidden>
+            </div>
+            <div class="model-info" id="modelInfo" style="display: none;">
+              <div class="info-row">
+                <span class="info-label">Name</span>
+                <span class="info-value" id="infoName">-</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Size</span>
+                <span class="info-value" id="infoSize">-</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Backend</span>
+                <select class="backend-select" id="backendSelect">
+                  <option value="auto">Auto-detect</option>
+                  <option value="wasm">WASM (CPU)</option>
+                  <option value="webgl">WebGL (GPU)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h3 class="panel-title">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <polygon points="4,2 14,9 4,16" stroke="#00ff88" stroke-width="1.5" fill="none"/>
+              </svg>
+              Inference
+            </h3>
+            <button class="run-btn" id="runBtn" disabled>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <polygon points="4,2 16,10 4,18" fill="currentColor"/>
+              </svg>
+              Run Inference
+            </button>
+            <p class="run-hint" id="runHint">Load a model and upload an image first</p>
+          </div>
+
+          <div class="panel-section metrics-panel">
+            <h3 class="panel-title">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M2 14l4-4 3 3 7-8" stroke="#00ff88" stroke-width="1.5"/>
+              </svg>
+              Speed Metrics
+            </h3>
+            <div class="metrics-grid">
+              <div class="metric-card preprocess">
+                <div class="metric-header">
+                  <span class="metric-name">Preprocess</span>
+                  <span class="metric-time" id="preprocessTime">--</span>
+                </div>
+                <div class="metric-bar">
+                  <div class="metric-fill" id="preprocessBar" style="width: 0%"></div>
+                </div>
+                <span class="metric-percent" id="preprocessPercent">0%</span>
+              </div>
+              <div class="metric-card inference">
+                <div class="metric-header">
+                  <span class="metric-name">Inference</span>
+                  <span class="metric-time" id="inferenceTime">--</span>
+                </div>
+                <div class="metric-bar">
+                  <div class="metric-fill" id="inferenceBar" style="width: 0%"></div>
+                </div>
+                <span class="metric-percent" id="inferencePercent">0%</span>
+              </div>
+              <div class="metric-card postprocess">
+                <div class="metric-header">
+                  <span class="metric-name">Postprocess</span>
+                  <span class="metric-time" id="postprocessTime">--</span>
+                </div>
+                <div class="metric-bar">
+                  <div class="metric-fill" id="postprocessBar" style="width: 0%"></div>
+                </div>
+                <span class="metric-percent" id="postprocessPercent">0%</span>
+              </div>
+            </div>
+            <div class="total-metric">
+              <span class="total-label">Total Time</span>
+              <span class="total-time" id="totalTime">-- ms</span>
+            </div>
+            <div class="stats-row">
+              <div class="stat">
+                <span class="stat-label">Runs</span>
+                <span class="stat-value" id="runCount">0</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Avg</span>
+                <span class="stat-value" id="avgTime">-- ms</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Min</span>
+                <span class="stat-value" id="minTime">-- ms</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Max</span>
+                <span class="stat-value" id="maxTime">-- ms</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <button class="export-btn" id="exportBtn" disabled>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M3 12v3h12v-3M9 3v9M5 8l4 4 4-4" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              Export Results JSON
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <section class="results-section" id="resultsSection" style="display: none;">
+        <div class="results-header">
+          <h3>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="2" y="2" width="16" height="16" rx="2" stroke="#00ff88" stroke-width="1.5"/>
+              <rect x="5" y="7" width="10" height="6" stroke="#00ccff" stroke-width="1.5"/>
+              <path d="M8 7V5a2 2 0 014 0v2" stroke="#00ff88" stroke-width="1.5"/>
+            </svg>
+            Detection Results
+          </h3>
+          <span class="detection-count" id="detectionCount">0 objects detected</span>
+        </div>
+        <div class="results-canvas-container">
+          <canvas id="resultsCanvas"></canvas>
+        </div>
+        <div class="detections-list" id="detectionsList"></div>
+      </section>
+    </main>
+
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort.min.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

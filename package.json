@@ -1,0 +1,17 @@
+{
+  "name": "onnx-yolo-benchmark",
+  "version": "1.0.0",
+  "description": "Browser-based YOLO inference benchmark using ONNX Runtime Web",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "onnxruntime-web": "^1.18.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}
