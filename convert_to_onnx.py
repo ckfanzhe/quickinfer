@@ -41,9 +41,16 @@ def convert_model(model_name):
         # Load model
         model = YOLO(pt_path)
 
-        # Export to ONNX (dynamic axes for batch size)
-        # opset=11 for better compatibility
-        success = model.export(format='onnx', imgsz=640, opset=11, dynamic=True)
+        # Export to ONNX
+        # opset=12 with simplify=True for correct model output
+        # Use dynamic=False for consistent output shape
+        success = model.export(
+            format='onnx',
+            imgsz=640,
+            opset=12,
+            dynamic=False,
+            simplify=True
+        )
 
         # Move to output directory
         exported_path = os.path.join(PT_DIR, f'{model_name}.onnx')

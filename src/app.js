@@ -9,7 +9,9 @@ const state = {
   imageData: null,
   results: [],
   runStats: { count: 0, times: [] },
-  serverModels: []
+  serverModels: [],
+  // Image display info for coordinate mapping
+  displayScale: { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0, displayed: false }
 };
 
 // DOM Elements
@@ -250,6 +252,9 @@ function renderImagePreview(img) {
   const maxHeight = elements.uploadZone.clientHeight;
 
   let { width, height } = img;
+  let offsetX = 0, offsetY = 0;
+  let scaleX = 1, scaleY = 1;
+
   if (width > maxWidth) {
     height = (maxWidth / width) * height;
     width = maxWidth;
@@ -259,9 +264,26 @@ function renderImagePreview(img) {
     height = maxHeight;
   }
 
-  elements.previewCanvas.width = width;
-  elements.previewCanvas.height = height;
-  ctx.drawImage(img, 0, 0, width, height);
+  // Calculate scaling and offset for coordinate mapping
+  // The image is scaled to fit within maxWidth x maxHeight while preserving aspect ratio
+  // and centered with letterboxing
+  scaleX = width / img.width;
+  scaleY = height / img.height;
+  offsetX = (maxWidth - width) / 2;
+  offsetY = (maxHeight - height) / 2;
+
+  // Store display info for coordinate mapping
+  state.displayScale = { scaleX, scaleY, offsetX, offsetY, displayed: false };
+
+  elements.previewCanvas.width = maxWidth;
+  elements.previewCanvas.height = maxHeight;
+
+  // Clear canvas with dark background for letterbox
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, maxWidth, maxHeight);
+
+  // Draw image centered
+  ctx.drawImage(img, offsetX, offsetY, width, height);
 }
 
 // YOLO Processing
@@ -291,7 +313,16 @@ async function preprocessImage(img, targetSize = 640) {
 
   return {
     tensor: new window.ort.Tensor('float32', float32Data, [1, 3, targetSize, targetSize]),
-    scale, pad: { left: 0, top: 0 }, originalSize: { width: w, height: h }, canvas
+    scale,
+    pad: {
+      left: 0,
+      top: 0,
+      right: targetSize - newW,
+      bottom: targetSize - newH
+    },
+    originalSize: { width: w, height: h },
+    resizedSize: { width: newW, height: newH },
+    canvas
   };
 }
 
@@ -301,64 +332,124 @@ function xywh2xyxy(x, y, w, h) {
   return [x - w / 2, y - h / 2, x + w / 2, y + h / 2];
 }
 
-function applyNMS(boxes, scores, iouThreshold = 0.45) {
-  const indices = scores.map((score, i) => ({ score, index: i }))
+function applyNMS(boxes, scores, iouThreshold = 0.5) {
+  // Sort by score descending
+  const indices = scores
+    .map((score, i) => ({ score, index: i }))
     .sort((a, b) => b.score - a.score);
+
   const keep = [];
+  const suppressed = new Array(boxes.length).fill(false);
 
-  while (indices.length > 0) {
-    const current = indices.shift();
-    keep.push(current);
+  for (const item of indices) {
+    if (suppressed[item.index]) continue;
 
-    for (let i = indices.length - 1; i >= 0; i--) {
-      const item = indices[i];
-      const [ax1, ay1, ax2, ay2] = boxes[current.index];
-      const [bx1, by1, bx2, by2] = boxes[item.index];
+    keep.push(item);
 
-      const interX1 = Math.max(ax1, bx1);
-      const interY1 = Math.max(ay1, by1);
-      const interX2 = Math.min(ax2, bx2);
-      const interY2 = Math.min(ay2, by2);
+    // Suppress boxes with high IoU
+    for (let i = 0; i < indices.length; i++) {
+      const other = indices[i];
+      if (suppressed[other.index] || other.index === item.index) continue;
+
+      const boxA = boxes[item.index];
+      const boxB = boxes[other.index];
+
+      const interX1 = Math.max(boxA[0], boxB[0]);
+      const interY1 = Math.max(boxA[1], boxB[1]);
+      const interX2 = Math.min(boxA[2], boxB[2]);
+      const interY2 = Math.min(boxA[3], boxB[3]);
       const interArea = Math.max(0, interX2 - interX1) * Math.max(0, interY2 - interY1);
-      const areaA = (ax2 - ax1) * (ay2 - ay1);
-      const areaB = (bx2 - bx1) * (by2 - by1);
-      const iou = interArea / (areaA + areaB - interArea);
+      const areaA = (boxA[2] - boxA[0]) * (boxA[3] - boxA[1]);
+      const areaB = (boxB[2] - boxB[0]) * (boxB[3] - boxB[1]);
+      const unionArea = areaA + areaB - interArea;
+      const iou = interArea / unionArea;
 
-      if (iou > iouThreshold) indices.splice(i, 1);
+      if (iou > iouThreshold) {
+        suppressed[other.index] = true;
+      }
     }
   }
+
   return keep;
 }
 
-async function postprocess(output, preprocessData, confThreshold = 0.25) {
-  const { scale, originalSize } = preprocessData;
+async function postprocess(output, preprocessData, confThreshold = 0.65) {
+  const iouThreshold = 0.5;
+  const { scale, originalSize, pad } = preprocessData;
   const outputData = output.data;
   const numClasses = 80;
   const numBoxes = 8400;
+
+  // YOLOv8 ONNX output format is [1, 84, 8400] features-first
+  // Indexing: data[featureIdx * numBoxes + boxIdx]
+  // Python and Node.js both confirm this format
+  const isFeaturesFirst = output.dims[1] === 84 && output.dims[2] === 8400;
+
+  // Helper to access bbox and class scores based on detected format
+  const getBbox = (boxIdx) => {
+    if (isFeaturesFirst) {
+      return [
+        outputData[0 * numBoxes + boxIdx],  // cx
+        outputData[1 * numBoxes + boxIdx],  // cy
+        outputData[2 * numBoxes + boxIdx],  // w
+        outputData[3 * numBoxes + boxIdx]   // h
+      ];
+    } else {
+      // [1, 8400, 84] format: boxIdx * 84 + featureIdx
+      return [
+        outputData[boxIdx * 84 + 0],  // cx
+        outputData[boxIdx * 84 + 1],  // cy
+        outputData[boxIdx * 84 + 2],  // w
+        outputData[boxIdx * 84 + 3]   // h
+      ];
+    }
+  };
+
+  const getClassScore = (boxIdx, classIdx) => {
+    if (isFeaturesFirst) {
+      return sigmoid(outputData[(4 + classIdx) * numBoxes + boxIdx]);
+    } else {
+      return sigmoid(outputData[boxIdx * 84 + 4 + classIdx]);
+    }
+  };
+
+  console.log('Detected output format:', isFeaturesFirst ? '[1,84,8400] (features first)' : '[1,8400,84] (boxes first)');
 
   const boxes = [], scores = [], classIds = [];
 
   for (let i = 0; i < numBoxes; i++) {
     let maxScore = 0, classId = 0;
+
+    // Find max class score
     for (let c = 0; c < numClasses; c++) {
-      const score = sigmoid(outputData[c * numBoxes + i]);
+      const score = getClassScore(i, c);
       if (score > maxScore) { maxScore = score; classId = c; }
     }
+
     if (maxScore > confThreshold) {
-      const cx = outputData[numClasses * numBoxes + i];
-      const cy = outputData[(numClasses + 1) * numBoxes + i];
-      const w = outputData[(numClasses + 2) * numBoxes + i];
-      const h = outputData[(numClasses + 3) * numBoxes + i];
+      const [cx, cy, w, h] = getBbox(i);
       const [x1, y1, x2, y2] = xywh2xyxy(cx, cy, w, h);
-      const s = 1 / scale;
-      boxes.push([Math.max(0, (x1) * s), Math.max(0, (y1) * s),
-                  Math.min(originalSize.width, (x2) * s), Math.min(originalSize.height, (y2) * s)]);
+
+      // Scale coordinates back to original image size
+      // Model outputs in letterbox space (0 to 640)
+      // Need to account for padding and scaling
+      const scaleX = originalSize.width / (640 - pad.left - pad.right);
+      const scaleY = originalSize.height / (640 - pad.top - pad.bottom);
+
+      boxes.push([
+        Math.max(0, (x1 - pad.left) * scaleX),
+        Math.max(0, (y1 - pad.top) * scaleY),
+        Math.min(originalSize.width, (x2 - pad.left) * scaleX),
+        Math.min(originalSize.height, (y2 - pad.top) * scaleY)
+      ]);
       scores.push(maxScore);
       classIds.push(classId);
     }
   }
 
-  const nmsIndices = applyNMS(boxes, scores);
+  console.log('Boxes after confidence filtering:', boxes.length);
+  const nmsIndices = applyNMS(boxes, scores, iouThreshold);
+  console.log('Boxes after NMS:', nmsIndices.length);
   const resultsCanvas = document.createElement('canvas');
   resultsCanvas.width = originalSize.width;
   resultsCanvas.height = originalSize.height;
@@ -408,8 +499,14 @@ async function runInference() {
     const output = await state.session.run(feeds);
     timings.inference = performance.now() - inferenceStart;
 
+    // Debug: check output shape
+    const outputKey = Object.keys(output)[0];
+    const outputTensor = output[outputKey];
+    console.log('Output shape:', outputTensor.dims);
+    console.log('Output data sample (first 10):', outputTensor.data.slice(0, 10));
+
     const postprocessStart = performance.now();
-    const { detections, canvas } = await postprocess(output[Object.keys(output)[0]], preprocessData);
+    const { detections, canvas } = await postprocess(output[outputKey], preprocessData);
     timings.postprocess = performance.now() - postprocessStart;
 
     state.results = detections;
@@ -458,13 +555,66 @@ function updateStats(times) {
 }
 
 function displayResults(canvas, detections) {
-  elements.resultsSection.style.display = 'block';
-  const ctx = elements.resultsCanvas.getContext('2d');
-  elements.resultsCanvas.width = canvas.width;
-  elements.resultsCanvas.height = canvas.height;
-  ctx.drawImage(canvas, 0, 0);
+  // Draw detection boxes directly on the preview canvas (uploaded image)
+  const ctx = elements.previewCanvas.getContext('2d');
+  const { scaleX, scaleY, offsetX, offsetY } = state.displayScale;
 
+  // Redraw the original image with letterbox
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, elements.previewCanvas.width, elements.previewCanvas.height);
+
+  // Calculate display dimensions
+  const displayWidth = canvas.width * scaleX;
+  const displayHeight = canvas.height * scaleY;
+
+  // Draw image centered with letterbox
+  ctx.drawImage(
+    state.imageData,
+    offsetX, offsetY, displayWidth, displayHeight
+  );
+
+  // Draw detection boxes on preview canvas
+  const colors = ['#00ff88', '#ff3366', '#00ccff', '#ffaa00', '#ff00ff', '#88ff00'];
+
+  for (const d of detections) {
+    const [x1, y1, x2, y2] = d.bbox;
+    const color = colors[d.classId % colors.length];
+
+    // Scale and offset coordinates to displayed image position
+    const sx1 = offsetX + x1 * scaleX;
+    const sy1 = offsetY + y1 * scaleY;
+    const sx2 = offsetX + x2 * scaleX;
+    const sy2 = offsetY + y2 * scaleY;
+    const boxWidth = sx2 - sx1;
+    const boxHeight = sy2 - sy1;
+
+    // Draw box
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(sx1, sy1, boxWidth, boxHeight);
+
+    // Draw label background
+    const label = `${d.className} ${(d.confidence * 100).toFixed(1)}%`;
+    ctx.font = 'bold 14px JetBrains Mono';
+    const textMetrics = ctx.measureText(label);
+    const padding = 4;
+
+    ctx.fillStyle = color;
+    ctx.fillRect(sx1, sy1 - 22, textMetrics.width + padding * 2, 20);
+
+    // Draw label text
+    ctx.fillStyle = '#000';
+    ctx.fillText(label, sx1 + padding, sy1 - 7);
+  }
+
+  // Mark as displayed
+  state.displayScale.displayed = true;
+
+  // Show detection count and list below
+  elements.resultsSection.style.display = 'block';
   elements.detectionCount.textContent = `${detections.length} object${detections.length !== 1 ? 's' : ''} detected`;
+
+  // Update detections list
   elements.detectionsList.innerHTML = detections.map(d => `
     <div class="detection-item">
       <span class="class-name">${d.className}</span>
@@ -510,6 +660,10 @@ elements.uploadZone.addEventListener('drop', (e) => {
 elements.clearImageBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   state.imageData = null;
+  state.displayScale = { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0, displayed: false };
+  // Clear the preview canvas
+  const ctx = elements.previewCanvas.getContext('2d');
+  ctx.clearRect(0, 0, elements.previewCanvas.width, elements.previewCanvas.height);
   elements.imagePreview.style.display = 'none';
   elements.uploadPlaceholder.style.display = 'flex';
   checkReadyState();

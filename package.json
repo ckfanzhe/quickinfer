@@ -12,6 +12,8 @@
     "onnxruntime-web": "^1.18.0"
   },
   "devDependencies": {
+    "jimp": "^1.6.0",
+    "onnxruntime-node": "^1.24.3",
     "vite": "^5.4.0"
   }
 }
