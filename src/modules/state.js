@@ -27,6 +27,16 @@ export function createAppState() {
     config: {
       confThreshold: DEFAULT_CONF_THRESHOLD,
       iouThreshold: DEFAULT_IOU_THRESHOLD
+    },
+
+    // Webcam state
+    webcam: {
+      stream: null,
+      isRunning: false,
+      fps: 0,
+      frameCount: 0,
+      lastFpsUpdate: 0,
+      animationId: null
     }
   };
 }

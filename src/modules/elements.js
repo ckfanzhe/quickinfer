@@ -26,7 +26,11 @@ export const elements = {
 
   // Inference
   runBtn: $('runBtn'),
+  webcamBtn: $('webcamBtn'),
   runHint: $('runHint'),
+  fpsDisplay: $('fpsDisplay'),
+  fpsValue: $('fpsValue'),
+  webcamVideo: $('webcamVideo'),
 
   // Metrics
   preprocessTime: $('preprocessTime'),

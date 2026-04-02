@@ -634,6 +634,45 @@ body {
   50% { box-shadow: 0 0 40px rgba(255, 170, 0, 0.7); }
 }
 
+/* Webcam Button - matches run-btn layout */
+.webcam-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #00aaff, #0088cc);
+  border: none;
+  border-radius: var(--radius);
+  color: #000;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.webcam-btn:hover:not(:disabled) {
+  box-shadow: 0 0 30px rgba(0, 200, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.webcam-btn:disabled {
+  background: var(--border);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.webcam-btn.running {
+  background: var(--warning);
+  animation: glow-pulse 1.5s infinite;
+}
+
 .run-hint {
   margin-top: 10px;
   font-size: 11px;
@@ -1008,16 +1047,26 @@ body {
   .upload-section {
     grid-column: 1;
     grid-row: 1;
-    min-height: 240px;
+    min-height: 350px;
   }
 
   .upload-zone {
-    min-height: 240px;
+    min-height: 350px;
   }
 
   .control-panel {
     grid-column: 1;
     grid-row: 2;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .inference-section {
+    order: 1;
+  }
+
+  .model-section {
+    order: 2;
   }
 
   .metrics-panel {

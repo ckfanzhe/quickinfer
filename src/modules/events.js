@@ -13,7 +13,8 @@ export function setupEventHandlers(state, handlers) {
     onRunInference,     // When run button is clicked
     onExportResults,    // When export button is clicked
     onBackendSwitch,   // When backend is changed
-    onClearImage        // When image is cleared
+    onClearImage,       // When image is cleared
+    onWebcamToggle      // When webcam button is clicked
   } = handlers;
 
   // File input - click to upload
@@ -81,6 +82,11 @@ export function setupEventHandlers(state, handlers) {
   // Backend select change
   elements.backendSelect.addEventListener('change', () => {
     if (onBackendSwitch) onBackendSwitch();
+  });
+
+  // Webcam button
+  elements.webcamBtn.addEventListener('click', () => {
+    if (onWebcamToggle) onWebcamToggle();
   });
 
   // Example images click handler

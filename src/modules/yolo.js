@@ -229,6 +229,31 @@ export function drawDetectionsOnPreview(previewCanvas, imageData, displayScale, 
   );
 
   // Draw detection boxes on preview canvas
+  _drawDetectionBoxes(ctx, detections, scaleX, scaleY, offsetX, offsetY);
+
+  return previewCanvas;
+}
+
+// Draw webcam video frame with detections
+export function drawWebcamFrame(previewCanvas, video, displayScale, detections) {
+  const ctx = previewCanvas.getContext('2d');
+  const { offsetX, offsetY, displayWidth, displayHeight, scaleX, scaleY } = displayScale;
+
+  // Clear with dark background for letterbox
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+  // Draw video frame centered
+  ctx.drawImage(video, offsetX, offsetY, displayWidth, displayHeight);
+
+  // Draw detection boxes
+  _drawDetectionBoxes(ctx, detections, scaleX, scaleY, offsetX, offsetY);
+
+  return previewCanvas;
+}
+
+// Internal helper to draw detection boxes
+function _drawDetectionBoxes(ctx, detections, scaleX, scaleY, offsetX, offsetY) {
   for (const d of detections) {
     const [x1, y1, x2, y2] = d.bbox;
     const color = DETECTION_COLORS[d.classId % DETECTION_COLORS.length];
@@ -241,24 +266,25 @@ export function drawDetectionsOnPreview(previewCanvas, imageData, displayScale, 
     const boxWidth = sx2 - sx1;
     const boxHeight = sy2 - sy1;
 
+    // Skip invalid boxes
+    if (boxWidth <= 0 || boxHeight <= 0) continue;
+
     // Draw box
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.strokeRect(sx1, sy1, boxWidth, boxHeight);
 
     // Draw label background
-    const label = `${d.className} ${(d.confidence * 100).toFixed(1)}%`;
-    ctx.font = 'bold 14px JetBrains Mono';
+    const label = `${d.className} ${(d.confidence * 100).toFixed(0)}%`;
+    ctx.font = 'bold 12px JetBrains Mono';
     const textMetrics = ctx.measureText(label);
-    const padding = 4;
+    const padding = 3;
 
     ctx.fillStyle = color;
-    ctx.fillRect(sx1, sy1 - 22, textMetrics.width + padding * 2, 20);
+    ctx.fillRect(sx1, sy1 - 18, textMetrics.width + padding * 2, 16);
 
     // Draw label text
     ctx.fillStyle = '#000';
-    ctx.fillText(label, sx1 + padding, sy1 - 7);
+    ctx.fillText(label, sx1 + padding, sy1 - 5);
   }
-
-  return previewCanvas;
 }

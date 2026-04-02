@@ -56,6 +56,32 @@ export function renderExampleImages(examples) {
   `).join('');
 }
 
+// Update FPS display
+export function updateFpsDisplay(fps) {
+  elements.fpsValue.textContent = fps;
+}
+
+// Show/hide FPS display
+export function setFpsDisplayVisible(visible) {
+  elements.fpsDisplay.style.display = visible ? 'flex' : 'none';
+}
+
+// Update webcam button state
+export function setWebcamButtonState(isRunning) {
+  if (isRunning) {
+    elements.webcamBtn.classList.add('running');
+    elements.webcamBtn.querySelector('.btn-text').textContent = 'Stop Camera';
+  } else {
+    elements.webcamBtn.classList.remove('running');
+    elements.webcamBtn.querySelector('.btn-text').textContent = 'Start Camera';
+  }
+}
+
+// Enable/disable webcam button
+export function setWebcamButtonEnabled(enabled) {
+  elements.webcamBtn.disabled = !enabled;
+}
+
 // Export results to JSON
 export function exportResults(modelInfo, imageData, runStats, results) {
   const data = {

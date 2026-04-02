@@ -1,10 +1,12 @@
 import { defineConfig, loadEnv } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import mkcert from 'vite-plugin-mkcert';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
+  // Load env from project root (parent of src) before setting root to src
   const env = loadEnv(mode, __dirname, '');
   // ModelScope configuration
   const modelScopeRepo = env.VITE_MODELSCOPE_REPO || 'Xenova/yolov8-pose-onnx';
@@ -20,6 +22,7 @@ export default defineConfig(({ mode }) => {
   return {
     root: path.join(__dirname, 'src'),
     base: isGitHubBuild ? '/quickinfer/' : './',
+    plugins: isGitHubBuild ? [] : [mkcert()],
     define: {
       'import.meta.env.VITE_MODELSCOPE_REPO': JSON.stringify(modelScopeRepo),
       'import.meta.env.VITE_MODELSCOPE_BRANCH': JSON.stringify(modelBranch),

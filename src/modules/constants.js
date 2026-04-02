@@ -32,3 +32,7 @@ export const DEFAULT_CONF_THRESHOLD = 0.65;
 export const DEFAULT_IOU_THRESHOLD = 0.5;
 export const DEFAULT_NUM_CLASSES = 80;
 export const DEFAULT_NUM_BOXES = 8400;
+
+// Webcam configuration
+export const WEBCAM_FPS_UPDATE_INTERVAL = 1000;  // ms
+export const WEBCAM_TARGET_FPS = 30;            // target FPS

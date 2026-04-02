@@ -37,7 +37,49 @@
       <div class="top-row">
         <!-- Left: Model Selection + Inference -->
         <aside class="control-panel">
-          <div class="panel-section">
+          <!-- Inference section - first on mobile -->
+          <div class="panel-section inference-section">
+            <h3 class="panel-title">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <polygon points="4,2 14,9 4,16" stroke="#00ff88" stroke-width="1.5" fill="none"/>
+              </svg>
+              Inference
+            </h3>
+            <div class="backend-selector">
+              <label class="preset-label">Backend</label>
+              <select class="backend-select" id="backendSelect">
+                <option value="auto">Auto-detect</option>
+                <option value="wasm">WASM (CPU)</option>
+                <option value="webgpu">WebGPU (GPU)</option>
+                <option value="webgl">WebGL (GPU)</option>
+              </select>
+              <span class="backend-current" id="backendCurrent">-</span>
+            </div>
+            <div class="inference-controls">
+              <button class="run-btn" id="runBtn" disabled>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <polygon points="4,2 16,10 4,18" fill="currentColor"/>
+                </svg>
+                Run Inference
+              </button>
+              <button class="webcam-btn" id="webcamBtn" disabled>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <rect x="2" y="4" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M14 8l4-2v8l-4-2" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+                <span class="btn-text">Start Camera</span>
+              </button>
+            </div>
+            <div class="fps-display" id="fpsDisplay" style="display: none;">
+              <span class="fps-value" id="fpsValue">0</span>
+              <span class="fps-unit">FPS</span>
+            </div>
+            <p class="run-hint" id="runHint">Load a model and upload an image first</p>
+            <video id="webcamVideo" autoplay playsinline style="display: none;"></video>
+          </div>
+
+          <!-- Model Selection section - second on mobile -->
+          <div class="panel-section model-section">
             <h3 class="panel-title">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <rect x="1" y="1" width="16" height="16" rx="2" stroke="#00ccff" stroke-width="1.5"/>
@@ -73,32 +115,6 @@
                 <span class="info-value" id="infoSize">-</span>
               </div>
             </div>
-          </div>
-
-          <div class="panel-section">
-            <h3 class="panel-title">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <polygon points="4,2 14,9 4,16" stroke="#00ff88" stroke-width="1.5" fill="none"/>
-              </svg>
-              Inference
-            </h3>
-            <div class="backend-selector">
-              <label class="preset-label">Backend</label>
-              <select class="backend-select" id="backendSelect">
-                <option value="auto">Auto-detect</option>
-                <option value="wasm">WASM (CPU)</option>
-                <option value="webgpu">WebGPU (GPU)</option>
-                <option value="webgl">WebGL (GPU)</option>
-              </select>
-              <span class="backend-current" id="backendCurrent">-</span>
-            </div>
-            <button class="run-btn" id="runBtn" disabled>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <polygon points="4,2 16,10 4,18" fill="currentColor"/>
-              </svg>
-              Run Inference
-            </button>
-            <p class="run-hint" id="runHint">Load a model and upload an image first</p>
           </div>
         </aside>
 
