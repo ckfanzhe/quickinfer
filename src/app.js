@@ -96,17 +96,6 @@ function updateModelStatus(status, text) {
   elements.modelStatus.querySelector('.status-text').textContent = `Model: ${text}`;
 }
 
-function updateBackendDisplay(backend) {
-  const text = backend === 'auto' ? 'Auto' : (backend === 'wasm' ? 'WASM' : (backend === 'webgpu' ? 'WebGPU' : 'WebGL'));
-  const color = backend === 'wasm' ? 'var(--secondary)' : (backend === 'webgl' ? 'var(--warning)' : (backend === 'webgpu' ? 'var(--success)' : 'var(--primary)'));
-  elements.backendCurrent.textContent = text;
-  elements.backendCurrent.style.color = color;
-  elements.backendBadge.textContent = text;
-  elements.backendBadge.style.background = color === 'var(--success)' ? 'rgba(0, 255, 136, 0.15)' : (color === 'var(--secondary)' ? 'rgba(0, 204, 255, 0.15)' : (color === 'var(--warning)' ? 'rgba(255, 170, 0, 0.15)' : 'rgba(0, 255, 136, 0.15)'));
-  elements.backendBadge.style.borderColor = color === 'var(--success)' ? 'var(--success)' : (color === 'var(--secondary)' ? 'var(--secondary)' : (color === 'var(--warning)' ? 'var(--warning)' : 'var(--primary)'));
-  elements.backendBadge.style.color = color === 'var(--success)' ? 'var(--success)' : (color === 'var(--secondary)' ? 'var(--secondary)' : (color === 'var(--warning)' ? 'var(--warning)' : 'var(--primary)'));
-}
-
 async function switchBackend() {
   if (!state.modelBuffer) {
     showToast('Please load a model first', 'error');
@@ -173,6 +162,9 @@ function renderModelList() {
     <div class="model-item" data-url="${model.url}" data-name="${model.name}">
       <span class="model-item-name">${model.name.replace('.onnx', '')}</span>
       <span class="model-item-size">${model.sizeFormatted}</span>
+      <div class="model-download-bar" style="display: none;">
+        <div class="model-download-progress"></div>
+      </div>
     </div>
   `).join('');
 
@@ -189,6 +181,8 @@ async function selectServerModel(item) {
 
   const name = item.dataset.name;
   const url = item.dataset.url;
+  const downloadBar = item.querySelector('.model-download-bar');
+  const downloadProgress = item.querySelector('.model-download-progress');
 
   updateModelStatus('loading', 'Loading...');
 
@@ -201,10 +195,41 @@ async function selectServerModel(item) {
       modelBuffer = cached;
       showToast('Model loaded from cache', 'success');
     } else {
-      // Download from raw.githubusercontent.com (CORS-enabled)
+      // Download with progress tracking
+      downloadBar.style.display = 'block';
+      downloadProgress.style.width = '0%';
+      updateModelStatus('loading', 'Downloading... 0%');
+
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      modelBuffer = await response.arrayBuffer();
+
+      const contentLength = parseInt(response.headers.get('Content-Length'), 10) || 0;
+      const reader = response.body.getReader();
+      const chunks = [];
+      let receivedLength = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        receivedLength += value.length;
+        if (contentLength > 0) {
+          const percent = Math.round((receivedLength / contentLength) * 100);
+          downloadProgress.style.width = percent + '%';
+          updateModelStatus('loading', `Downloading... ${percent}%`);
+        }
+      }
+
+      // Concatenate chunks into a single Uint8Array
+      const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+      modelBuffer = new Uint8Array(totalLength);
+      let position = 0;
+      for (const chunk of chunks) {
+        modelBuffer.set(chunk, position);
+        position += chunk.length;
+      }
+      modelBuffer = modelBuffer.buffer;
+
       await saveModelToCache(url, modelBuffer);
       showToast('Model downloaded and cached', 'success');
     }
@@ -235,6 +260,7 @@ async function selectServerModel(item) {
     }
   } finally {
     item.classList.remove('loading');
+    downloadBar.style.display = 'none';
   }
 }
 
@@ -748,6 +774,17 @@ elements.exportBtn.addEventListener('click', exportResults);
 elements.backendSelect.addEventListener('change', () => {
   switchBackend();
 });
+
+function updateBackendDisplay(backend) {
+  const text = backend === 'auto' ? 'Auto' : (backend === 'wasm' ? 'WASM' : (backend === 'webgpu' ? 'WebGPU' : 'WebGL'));
+  const color = backend === 'wasm' ? 'var(--secondary)' : (backend === 'webgl' ? 'var(--warning)' : (backend === 'webgpu' ? 'var(--success)' : 'var(--primary)'));
+  elements.backendCurrent.textContent = text;
+  elements.backendCurrent.style.color = color;
+  elements.backendBadge.textContent = text;
+  elements.backendBadge.style.background = color === 'var(--success)' ? 'rgba(0, 255, 136, 0.15)' : (color === 'var(--secondary)' ? 'rgba(0, 204, 255, 0.15)' : (color === 'var(--warning)' ? 'rgba(255, 170, 0, 0.15)' : 'rgba(0, 255, 136, 0.15)'));
+  elements.backendBadge.style.borderColor = color === 'var(--success)' ? 'var(--success)' : (color === 'var(--secondary)' ? 'var(--secondary)' : (color === 'var(--warning)' ? 'var(--warning)' : 'var(--primary)'));
+  elements.backendBadge.style.color = color === 'var(--success)' ? 'var(--success)' : (color === 'var(--secondary)' ? 'var(--secondary)' : (color === 'var(--warning)' ? 'var(--warning)' : 'var(--primary)'));
+}
 
 // Init
 updateModelStatus('', 'Not Loaded');
