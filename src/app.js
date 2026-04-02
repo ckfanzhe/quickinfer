@@ -1,10 +1,18 @@
 import { loadModelFromCache, saveModelToCache } from './model-cache.js';
+import busImg from './test_img/bus.jpg';
+import zidaneImg from './test_img/zidane.jpg';
 
 // Use ONNX Runtime from global window (loaded via script tag in index.html)
 
 // Model URLs - built at compile time via vite define
 // Format: ModelScope URL for CORS support
 const MODEL_URLS = import.meta.env.VITE_MODEL_URLS || '[]';
+
+// Example images
+const EXAMPLE_IMAGES = [
+  { name: 'Bus', src: busImg },
+  { name: 'Zidane', src: zidaneImg }
+];
 
 // App State
 const state = {
@@ -59,7 +67,8 @@ const elements = {
   resultsCanvas: $('resultsCanvas'),
   detectionCount: $('detectionCount'),
   detectionsList: $('detectionsList'),
-  toastContainer: $('toastContainer')
+  toastContainer: $('toastContainer'),
+  examplesGrid: $('examplesGrid')
 };
 
 // YOLO Class Names (COCO)
@@ -764,6 +773,40 @@ elements.clearImageBtn.addEventListener('click', (e) => {
   checkReadyState();
 });
 
+// Render example images
+function renderExampleImages() {
+  if (!elements.examplesGrid) return;
+  elements.examplesGrid.innerHTML = EXAMPLE_IMAGES.map((img, idx) => `
+    <div class="example-item" data-index="${idx}">
+      <img src="${img.src}" alt="${img.name}">
+      <span class="example-label">${img.name}</span>
+    </div>
+  `).join('');
+}
+
+// Example images click handler
+elements.examplesGrid?.addEventListener('click', (e) => {
+  const exampleItem = e.target.closest('.example-item');
+  if (!exampleItem || !state.session) {
+    if (!state.session) showToast('Please load a model first', 'error');
+    return;
+  }
+
+  const idx = parseInt(exampleItem.dataset.index, 10);
+  const imgData = EXAMPLE_IMAGES[idx];
+  const img = new Image();
+  img.onload = () => {
+    state.imageData = img;
+    renderImagePreview(img);
+    elements.uploadPlaceholder.style.display = 'none';
+    elements.imagePreview.style.display = 'block';
+    checkReadyState();
+    showToast('Example image loaded', 'success');
+  };
+  img.onerror = () => showToast('Failed to load example image', 'error');
+  img.src = imgData.src;
+});
+
 elements.localModelBtn.addEventListener('click', () => elements.onnxFileInput.click());
 elements.onnxFileInput.addEventListener('change', (e) => {
   if (e.target.files[0]) loadLocalModel(e.target.files[0]);
@@ -791,3 +834,4 @@ updateModelStatus('', 'Not Loaded');
 updateRunButton(false);
 updateBackendDisplay(elements.backendSelect.value);
 fetchServerModels();
+renderExampleImages();
