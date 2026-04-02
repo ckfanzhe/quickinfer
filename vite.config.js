@@ -14,9 +14,11 @@ export default defineConfig(({ mode }) => {
     url: `https://github.com/${repo}/releases/download/${release}/${m.name}`,
     sizeFormatted: m.size || '~12MB'
   })));
+  // Use relative paths for local dev, absolute /quickinfer/ for github build
+  const isGitHubBuild = mode === 'github';
   return {
     root: path.join(__dirname, 'src'),
-    base: env.VITE_BASE_PATH || '/',
+    base: isGitHubBuild ? '/quickinfer/' : './',
     define: {
       'import.meta.env.VITE_GITHUB_REPO': JSON.stringify(repo),
       'import.meta.env.VITE_RELEASE_TAG': JSON.stringify(release),

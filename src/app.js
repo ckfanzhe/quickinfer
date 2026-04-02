@@ -152,8 +152,10 @@ function checkReadyState() {
 // Server Models - fully static, no server API needed
 function fetchServerModels() {
   // Build GitHub Release URLs for models
+  // MODEL_URLS is replaced at build time to the actual array via vite define
+  // In dev mode fallback, it may be a JSON string that needs parsing
   try {
-    state.serverModels = JSON.parse(MODEL_URLS);
+    state.serverModels = Array.isArray(MODEL_URLS) ? MODEL_URLS : JSON.parse(MODEL_URLS || '[]');
   } catch {
     state.serverModels = [];
   }
