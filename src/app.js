@@ -196,6 +196,11 @@ async function loadLocalModel(file) {
   }
 
   updateModelStatus('loading', 'Loading...');
+  elements.localModelBtn.classList.add('loading');
+  elements.localModelBtn.disabled = true;
+  const btnText = elements.localModelBtn.querySelector('.btn-text');
+  const originalText = btnText.textContent;
+  btnText.innerHTML = '<span class="spinner"></span> Loading...';
 
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -217,6 +222,10 @@ async function loadLocalModel(file) {
     console.error('Load error:', error);
     updateModelStatus('error', 'Error');
     showToast(`Failed to load model: ${error.message}`, 'error');
+  } finally {
+    elements.localModelBtn.classList.remove('loading');
+    elements.localModelBtn.disabled = false;
+    btnText.textContent = originalText;
   }
 }
 
