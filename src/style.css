@@ -514,6 +514,63 @@ body {
   border-color: var(--primary);
 }
 
+/* Backend Selector */
+.backend-selector {
+  margin-bottom: 16px;
+}
+
+.backend-selector .preset-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.backend-selector .backend-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 12px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.backend-current {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Metrics Header */
+.metrics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.metrics-header .panel-title {
+  margin-bottom: 0;
+}
+
+.backend-badge {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Run Button */
 .run-btn {
   width: 100%;

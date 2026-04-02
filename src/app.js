@@ -6,6 +6,7 @@ import { loadModelFromCache, saveModelToCache } from './model-cache.js';
 const state = {
   session: null,
   modelInfo: null,
+  modelBuffer: null,  // Store buffer to recreate session with different backend
   imageData: null,
   results: [],
   runStats: { count: 0, times: [] },
@@ -31,6 +32,8 @@ const elements = {
   infoName: $('infoName'),
   infoSize: $('infoSize'),
   backendSelect: $('backendSelect'),
+  backendCurrent: $('backendCurrent'),
+  backendBadge: $('backendBadge'),
   runBtn: $('runBtn'),
   runHint: $('runHint'),
   preprocessTime: $('preprocessTime'),
@@ -87,6 +90,45 @@ function formatBytes(bytes) {
 function updateModelStatus(status, text) {
   elements.modelStatus.className = `model-status ${status}`;
   elements.modelStatus.querySelector('.status-text').textContent = `Model: ${text}`;
+}
+
+function updateBackendDisplay(backend) {
+  const text = backend === 'auto' ? 'Auto' : (backend === 'wasm' ? 'WASM' : (backend === 'webgpu' ? 'WebGPU' : 'WebGL'));
+  const color = backend === 'wasm' ? 'var(--secondary)' : (backend === 'webgl' ? 'var(--warning)' : (backend === 'webgpu' ? 'var(--success)' : 'var(--primary)'));
+  elements.backendCurrent.textContent = text;
+  elements.backendCurrent.style.color = color;
+  elements.backendBadge.textContent = text;
+  elements.backendBadge.style.background = color === 'var(--success)' ? 'rgba(0, 255, 136, 0.15)' : (color === 'var(--secondary)' ? 'rgba(0, 204, 255, 0.15)' : (color === 'var(--warning)' ? 'rgba(255, 170, 0, 0.15)' : 'rgba(0, 255, 136, 0.15)'));
+  elements.backendBadge.style.borderColor = color === 'var(--success)' ? 'var(--success)' : (color === 'var(--secondary)' ? 'var(--secondary)' : (color === 'var(--warning)' ? 'var(--warning)' : 'var(--primary)'));
+  elements.backendBadge.style.color = color === 'var(--success)' ? 'var(--success)' : (color === 'var(--secondary)' ? 'var(--secondary)' : (color === 'var(--warning)' ? 'var(--warning)' : 'var(--primary)'));
+}
+
+async function switchBackend() {
+  if (!state.modelBuffer) {
+    showToast('Please load a model first', 'error');
+    return;
+  }
+
+  const backend = elements.backendSelect.value;
+  updateModelStatus('loading', 'Switching backend...');
+
+  try {
+    const executionProviders = backend === 'auto' ? [] : [backend];
+    state.session = await window.ort.InferenceSession.create(state.modelBuffer, { executionProviders });
+    state.modelInfo.provider = backend;
+
+    updateModelStatus('ready', 'Ready');
+    updateBackendDisplay(backend);
+    showToast(`Switched to ${backend === 'wasm' ? 'WASM' : (backend === 'webgpu' ? 'WebGPU' : (backend === 'webgl' ? 'WebGL' : 'Auto'))}`, 'success');
+  } catch (error) {
+    console.error('Backend switch error:', error);
+    updateModelStatus('error', 'Error');
+    if (error.message && error.message.includes('resize') && error.message.includes('nearest')) {
+      showToast(`${backend} does not support this model. Try another backend.`, 'error');
+    } else {
+      showToast(`Failed to switch backend: ${error.message}`, 'error');
+    }
+  }
 }
 
 function updateRunButton(ready, running = false) {
@@ -170,6 +212,7 @@ async function selectServerModel(item) {
     state.session = await window.ort.InferenceSession.create(modelBuffer, { executionProviders });
 
     state.modelInfo = { name, size: modelBuffer.byteLength, provider: backend };
+    state.modelBuffer = modelBuffer;  // Save for backend switch
 
     // Update UI
     elements.modelInfo.style.display = 'block';
@@ -209,6 +252,7 @@ async function loadLocalModel(file) {
     state.session = await window.ort.InferenceSession.create(arrayBuffer, { executionProviders });
 
     state.modelInfo = { name: file.name, size: arrayBuffer.byteLength, provider: backend };
+    state.modelBuffer = arrayBuffer;  // Save for backend switch
 
     elements.modelInfo.style.display = 'block';
     elements.infoName.textContent = file.name;
@@ -531,7 +575,13 @@ async function runInference() {
 
   } catch (error) {
     console.error('Inference error:', error);
-    showToast(`Inference failed: ${error.message}`, 'error');
+
+    // Check if WebGL error with resize
+    if (error.message && error.message.includes('resize') && error.message.includes('nearest')) {
+      showToast('WebGL does not support this model. Try WebGPU or WASM backend.', 'error');
+    } else {
+      showToast(`Inference failed: ${error.message}`, 'error');
+    }
   } finally {
     updateRunButton(true, false);
   }
@@ -553,6 +603,9 @@ function displayMetrics(timings) {
   elements.preprocessPercent.textContent = p(preprocess) + '%';
   elements.inferencePercent.textContent = p(inference) + '%';
   elements.postprocessPercent.textContent = p(postprocess) + '%';
+
+  // Update backend display
+  updateBackendDisplay(elements.backendSelect.value);
 }
 
 function updateStats(times) {
@@ -685,8 +738,12 @@ elements.onnxFileInput.addEventListener('change', (e) => {
 
 elements.runBtn.addEventListener('click', runInference);
 elements.exportBtn.addEventListener('click', exportResults);
+elements.backendSelect.addEventListener('change', () => {
+  switchBackend();
+});
 
 // Init
 updateModelStatus('', 'Not Loaded');
 updateRunButton(false);
+updateBackendDisplay(elements.backendSelect.value);
 fetchServerModels();

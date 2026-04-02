@@ -72,14 +72,6 @@
                 <span class="info-label">Size</span>
                 <span class="info-value" id="infoSize">-</span>
               </div>
-              <div class="info-row">
-                <span class="info-label">Backend</span>
-                <select class="backend-select" id="backendSelect">
-                  <option value="auto">Auto-detect</option>
-                  <option value="wasm">WASM (CPU)</option>
-                  <option value="webgl">WebGL (GPU)</option>
-                </select>
-              </div>
             </div>
           </div>
 
@@ -90,6 +82,16 @@
               </svg>
               Inference
             </h3>
+            <div class="backend-selector">
+              <label class="preset-label">Backend</label>
+              <select class="backend-select" id="backendSelect">
+                <option value="auto">Auto-detect</option>
+                <option value="wasm">WASM (CPU)</option>
+                <option value="webgpu">WebGPU (GPU)</option>
+                <option value="webgl">WebGL (GPU)</option>
+              </select>
+              <span class="backend-current" id="backendCurrent">-</span>
+            </div>
             <button class="run-btn" id="runBtn" disabled>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <polygon points="4,2 16,10 4,18" fill="currentColor"/>
@@ -128,12 +130,15 @@
         <!-- Right: Performance Metrics -->
         <aside class="metrics-panel">
           <div class="panel-section">
-            <h3 class="panel-title">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M2 14l4-4 3 3 7-8" stroke="#00ff88" stroke-width="1.5"/>
-              </svg>
-              Speed Metrics
-            </h3>
+            <div class="metrics-header">
+              <h3 class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M2 14l4-4 3 3 7-8" stroke="#00ff88" stroke-width="1.5"/>
+                </svg>
+                Speed Metrics
+              </h3>
+              <span class="backend-badge" id="backendBadge">-</span>
+            </div>
             <div class="metrics-grid">
               <div class="metric-card preprocess">
                 <div class="metric-header">
@@ -218,7 +223,7 @@
     <div class="toast-container" id="toastContainer"></div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/ort.all.min.js"></script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>
