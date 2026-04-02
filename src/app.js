@@ -2,12 +2,10 @@ import { loadModelFromCache, saveModelToCache } from './model-cache.js';
 
 // Use ONNX Runtime from global window (loaded via script tag in index.html)
 
-// Model Configuration - Update these for GitHub Pages deployment
-// For GitHub Releases: use jsDelivr CDN format
-// e.g., https://cdn.jsdelivr.net/gh/YOUR_USER/YOUR_REPO@1.0.0/models/yolov8s.onnx
+// Model Configuration - GitHub Release URLs
 const MODEL_CONFIG = {
-  // GitHub repo for CDN models - UPDATE THIS after creating GitHub Releases
-  cdnBase: import.meta.env.VITE_CDN_BASE || '',
+  repo: import.meta.env.VITE_GITHUB_REPO || 'ckfanzhe/quickinfer',
+  release: import.meta.env.VITE_RELEASE_TAG || 'v1.0.0',
   models: import.meta.env.VITE_MODELS ? JSON.parse(import.meta.env.VITE_MODELS) : []
 };
 
@@ -157,10 +155,10 @@ function checkReadyState() {
 
 // Server Models
 async function fetchServerModels() {
-  // Combine CDN models (from env) and local server models
-  const cdnModels = MODEL_CONFIG.models.map(m => ({
+  // Build GitHub Release URLs for models
+  const releaseModels = MODEL_CONFIG.models.map(m => ({
     name: m.name,
-    url: MODEL_CONFIG.cdnBase + m.path,
+    url: `https://github.com/${MODEL_CONFIG.repo}/releases/download/${MODEL_CONFIG.release}/${m.name}`,
     sizeFormatted: m.size || '~12MB'
   }));
 
@@ -168,14 +166,12 @@ async function fetchServerModels() {
     const response = await fetch('/api/models');
     if (response.ok) {
       const data = await response.json();
-      state.serverModels = [...cdnModels, ...(data.models || [])];
+      state.serverModels = [...releaseModels, ...(data.models || [])];
     } else {
-      // Server not available, use CDN models only
-      state.serverModels = cdnModels;
+      state.serverModels = releaseModels;
     }
   } catch {
-    // Server not available, use CDN models only
-    state.serverModels = cdnModels;
+    state.serverModels = releaseModels;
   }
   renderModelList();
 }
