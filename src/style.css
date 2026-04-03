@@ -135,6 +135,18 @@ body {
   background: var(--error);
 }
 
+.github-link {
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.github-link:hover {
+  color: #fff;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
@@ -267,7 +279,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 14px;
 }
 
 /* Shared Panel Section */
@@ -286,7 +298,7 @@ body {
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -306,84 +318,45 @@ body {
   margin-bottom: 12px;
 }
 
-.model-list {
-  max-height: 180px;
-  overflow-y: auto;
+.model-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface-elevated);
-}
-
-.model-loading,
-.model-empty,
-.model-error {
-  padding: 16px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text);
   font-family: var(--font-display);
-}
-
-.model-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238888aa' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
 }
 
-.model-item:last-child {
-  border-bottom: none;
+.model-select:hover {
+  border-color: var(--border-hover);
 }
 
-.model-item:hover {
-  background: rgba(0, 204, 255, 0.1);
+.model-select:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
-.model-item.selected {
-  background: rgba(0, 255, 136, 0.15);
-  border-left: 3px solid var(--primary);
+.model-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.model-item.loading {
-  pointer-events: none;
+.model-select option {
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px;
 }
 
-.model-item.loading .model-item-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.model-item.loading .model-item-name::after {
-  content: '';
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--border);
-  border-top-color: var(--secondary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-/* Model Download Progress Bar */
-.model-download-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--border);
-  overflow: hidden;
-}
-
-.model-download-progress {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
-  transition: width 0.15s ease-out;
-  width: 0%;
+.model-select optgroup {
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 /* Local Model Button Loading */
@@ -590,10 +563,17 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* Inference Controls Container */
+.inference-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 /* Run Button */
 .run-btn {
   width: 100%;
-  padding: 16px;
+  padding: 10px 12px;
   background: linear-gradient(135deg, var(--primary), #00cc6a);
   border: none;
   border-radius: var(--radius);
@@ -637,7 +617,7 @@ body {
 /* Webcam Button - matches run-btn layout */
 .webcam-btn {
   width: 100%;
-  padding: 16px;
+  padding: 10px 12px;
   background: linear-gradient(135deg, #00aaff, #0088cc);
   border: none;
   border-radius: var(--radius);
@@ -686,34 +666,32 @@ body {
   color: var(--primary);
 }
 
-.metrics-grid {
+.metrics-bar {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 2px;
+  background: var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
-.metric-card {
+.metric-segment {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
   background: var(--surface-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
   transition: all 0.3s;
 }
 
-.metric-card.preprocess { border-left: 3px solid var(--preprocess); }
-.metric-card.inference { border-left: 3px solid var(--inference); }
-.metric-card.postprocess { border-left: 3px solid var(--postprocess); }
-
-.metric-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
+.metric-segment.preprocess { border-top: 3px solid var(--preprocess); }
+.metric-segment.inference { border-top: 3px solid var(--inference); }
+.metric-segment.postprocess { border-top: 3px solid var(--postprocess); }
 
 .metric-name {
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -722,7 +700,7 @@ body {
 
 .metric-time {
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -732,11 +710,11 @@ body {
 .postprocess .metric-time { color: var(--postprocess); }
 
 .metric-bar {
+  width: 100%;
   height: 4px;
   background: var(--border);
   border-radius: 2px;
   overflow: hidden;
-  margin-bottom: 6px;
 }
 
 .metric-fill {
@@ -745,9 +723,9 @@ body {
   transition: width 0.5s ease-out;
 }
 
-.preprocess .metric-fill { background: linear-gradient(90deg, var(--preprocess), #0099cc); }
-.inference .metric-fill { background: linear-gradient(90deg, var(--inference), #00cc6a); }
-.postprocess .metric-fill { background: linear-gradient(90deg, var(--postprocess), #cc2952); }
+.preprocess .metric-fill { background: var(--preprocess); }
+.inference .metric-fill { background: var(--inference); }
+.postprocess .metric-fill { background: var(--postprocess); }
 
 .metric-percent {
   font-family: var(--font-display);
@@ -759,8 +737,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
-  padding: 16px;
+  margin-top: 10px;
+  padding: 10px 12px;
   background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 204, 255, 0.1));
   border: 1px solid var(--primary);
   border-radius: var(--radius);
@@ -768,7 +746,7 @@ body {
 
 .total-label {
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -777,7 +755,7 @@ body {
 
 .total-time {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--primary);
   font-variant-numeric: tabular-nums;
@@ -786,13 +764,13 @@ body {
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-top: 12px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .stat {
   text-align: center;
-  padding: 8px;
+  padding: 6px;
   background: var(--surface-elevated);
   border-radius: var(--radius);
 }
@@ -803,12 +781,12 @@ body {
   color: var(--text-muted);
   text-transform: uppercase;
   font-family: var(--font-display);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .stat-value {
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text);
   font-variant-numeric: tabular-nums;
@@ -817,8 +795,8 @@ body {
 /* Export Button */
 .export-btn {
   width: 100%;
-  padding: 12px;
-  margin-top: 16px;
+  padding: 10px;
+  margin-top: 10px;
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -845,34 +823,36 @@ body {
 }
 
 /* Examples Section */
+.examples-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 10px 0;
+}
+
 .examples-section {
-  margin-top: 16px;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  padding: 0;
 }
 
 .examples-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .examples-grid {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .example-item {
   position: relative;
-  width: 120px;
-  height: 90px;
+  width: 100px;
+  height: 75px;
   border-radius: var(--radius);
   overflow: hidden;
   cursor: pointer;
@@ -1035,6 +1015,10 @@ body {
     order: 3;
   }
 
+  .github-link {
+    order: 4;
+  }
+
   .main {
     padding: 12px;
   }
@@ -1076,11 +1060,6 @@ body {
 
   .stats-row {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .examples-section {
-    grid-column: 1;
-    grid-row: 4;
   }
 
   .examples-grid {

@@ -16,39 +16,48 @@ export function fetchServerModels() {
 
 export function renderModelList(models, onSelect) {
   if (models.length === 0) {
-    elements.modelList.innerHTML = '<div class="model-empty">No models available</div>';
+    elements.modelSelect.innerHTML = '<option value="">No models available</option>';
+    elements.modelSelect.disabled = true;
     return;
   }
 
-  elements.modelList.innerHTML = models.map(model => `
-    <div class="model-item" data-url="${model.url}" data-name="${model.name}">
-      <span class="model-item-name">${model.name.replace('.onnx', '')}</span>
-      <span class="model-item-size">${model.sizeFormatted}</span>
-      <div class="model-download-bar" style="display: none;">
-        <div class="model-download-progress"></div>
-      </div>
-    </div>
-  `).join('');
-
-  // Add click handlers
-  elements.modelList.querySelectorAll('.model-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const name = item.dataset.name;
-      const url = item.dataset.url;
-      onSelect(name, url, item);
-    });
+  // Group models by prefix (e.g., yolov8n, yolov8s, yolov11n)
+  const grouped = {};
+  models.forEach(model => {
+    const prefix = model.name.replace(/\d+\.onnx$/, '').replace(/\.onnx$/, '');
+    if (!grouped[prefix]) grouped[prefix] = [];
+    grouped[prefix].push(model);
   });
+
+  let html = '<option value="">Select a model...</option>';
+  Object.entries(grouped).forEach(([group, groupModels]) => {
+    if (Object.keys(grouped).length > 1) {
+      html += `<optgroup label="${group.toUpperCase()}">`;
+    }
+    groupModels.forEach(model => {
+      html += `<option value="${model.url}" data-name="${model.name}">${model.name.replace('.onnx', '')} (${model.sizeFormatted})</option>`;
+    });
+    if (Object.keys(grouped).length > 1) {
+      html += '</optgroup>';
+    }
+  });
+
+  elements.modelSelect.innerHTML = html;
+  elements.modelSelect.disabled = false;
+
+  // Add change handler
+  elements.modelSelect.onchange = () => {
+    const option = elements.modelSelect.selectedOptions[0];
+    if (option && option.value) {
+      const name = option.dataset.name;
+      const url = option.value;
+      onSelect(name, url);
+    }
+  };
 }
 
 // Load model from server with progress tracking
-export async function loadServerModel(name, url, item, backend, onLoadComplete) {
-  const downloadBar = item.querySelector('.model-download-bar');
-  const downloadProgress = item.querySelector('.model-download-progress');
-
-  // Highlight selected
-  elements.modelList.querySelectorAll('.model-item').forEach(i => i.classList.remove('selected'));
-  item.classList.add('selected', 'loading');
-
+export async function loadServerModel(name, url, backend, onLoadComplete) {
   updateModelStatus('loading', 'Loading...');
 
   try {
@@ -60,9 +69,7 @@ export async function loadServerModel(name, url, item, backend, onLoadComplete) 
       modelBuffer = cached;
       showToast('Model loaded from cache', 'success');
     } else {
-      // Download with progress tracking
-      downloadBar.style.display = 'block';
-      downloadProgress.style.width = '0%';
+      // Download with progress tracking via status text
       updateModelStatus('loading', 'Downloading... 0%');
 
       const response = await fetch(url);
@@ -80,7 +87,6 @@ export async function loadServerModel(name, url, item, backend, onLoadComplete) 
         receivedLength += value.length;
         if (contentLength > 0) {
           const percent = Math.round((receivedLength / contentLength) * 100);
-          downloadProgress.style.width = percent + '%';
           updateModelStatus('loading', `Downloading... ${percent}%`);
         }
       }
@@ -98,6 +104,9 @@ export async function loadServerModel(name, url, item, backend, onLoadComplete) 
       await saveModelToCache(url, modelBuffer);
       showToast('Model downloaded and cached', 'success');
     }
+
+    // Model ready, now ONNX Runtime will load WASM from CDN
+    updateModelStatus('loading', 'Initializing runtime...');
 
     // Create session
     const executionProviders = backend === 'auto' ? [] : [backend];
@@ -124,8 +133,7 @@ export async function loadServerModel(name, url, item, backend, onLoadComplete) 
       showToast(`Failed to load model: ${error.message}`, 'error');
     }
   } finally {
-    item.classList.remove('loading');
-    downloadBar.style.display = 'none';
+    // no cleanup needed for select-based UI
   }
 }
 
@@ -145,6 +153,7 @@ export async function loadLocalModel(file, backend, onLoadComplete) {
 
   try {
     const arrayBuffer = await file.arrayBuffer();
+    updateModelStatus('loading', 'Initializing runtime...');
     const executionProviders = backend === 'auto' ? [] : [backend];
     const session = await window.ort.InferenceSession.create(arrayBuffer, { executionProviders });
 

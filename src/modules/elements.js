@@ -12,7 +12,7 @@ export const elements = {
 
   // Model selection
   modelStatus: $('modelStatus'),
-  modelList: $('modelList'),
+  modelSelect: $('modelSelect'),
   localModelBtn: $('localModelBtn'),
   onnxFileInput: $('onnxFileInput'),
   modelInfo: $('modelInfo'),

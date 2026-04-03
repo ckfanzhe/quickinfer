@@ -228,9 +228,9 @@ function init() {
     onFileSelect: () => {
       // File selected callback
     },
-    onModelSelect: (name, url, item) => {
+    onModelSelect: (name, url) => {
       const backend = elements.backendSelect.value;
-      loadServerModel(name, url, item, backend, (session, modelBuffer, modelInfo) => {
+      loadServerModel(name, url, backend, (session, modelBuffer, modelInfo) => {
         state.session = session;
         state.modelBuffer = modelBuffer;
         state.modelInfo = modelInfo;
@@ -324,9 +324,9 @@ function init() {
   // Load server models
   const serverModels = fetchServerModels();
   state.serverModels = serverModels;
-  renderModelList(serverModels, (name, url, item) => {
+  renderModelList(serverModels, (name, url) => {
     const backend = elements.backendSelect.value;
-    loadServerModel(name, url, item, backend, (session, modelBuffer, modelInfo) => {
+    loadServerModel(name, url, backend, (session, modelBuffer, modelInfo) => {
       state.session = session;
       state.modelBuffer = modelBuffer;
       state.modelInfo = modelInfo;

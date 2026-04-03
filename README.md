@@ -1,8 +1,6 @@
 # Web YOLO Benchmark
 
-Browser-based YOLOv8 inference benchmark using ONNX Runtime Web.
-
-![Web YOLO Benchmark](screenshot.png)
+Browser-based YOLOv8 inference benchmark using ONNX Runtime Web : [QuickInfer-web](https://ckfanzhe.github.io/quickinfer/) 
 
 ## Features
 
@@ -10,7 +8,7 @@ Browser-based YOLOv8 inference benchmark using ONNX Runtime Web.
 - Support for multiple backends: WASM (CPU), WebGPU, WebGL
 - Multiple model sizes: YOLOv8n, YOLOv8s, YOLOv8m, YOLOv8l, YOLOv8x
 - Real-time performance metrics: preprocessing, inference, postprocessing
-- Responsive design for mobile devices
+- Mobile browser inference with camera input support
 
 ## Usage
 
