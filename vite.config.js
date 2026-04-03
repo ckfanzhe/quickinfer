@@ -37,8 +37,11 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': 'http://localhost:3000',
         '/models': 'http://localhost:3000'
+      },
+      headers: {
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'require-corp'
       }
-    },
-    assetsInclude: ['**/*.wasm']
+    }
   };
 });

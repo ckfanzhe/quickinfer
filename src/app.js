@@ -210,10 +210,17 @@ function init() {
     return;
   }
 
-  // Configure ONNX Runtime Web
-  window.ort.env.wasm.wasmPath = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/';
-  window.ort.env.wasm.numThreads = 1;
-  window.ort.env.wasm.simd = false;
+  // Configure ONNX Runtime Web - SIMD and multi-threading for better performance
+  // WASM files loaded from jsdelivr CDN
+  window.ort.env.wasm.wasmPaths = {
+    'ort-wasm-simd-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/ort-wasm-simd-threaded.wasm',
+    'ort-wasm-simd-threaded.jsep.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/ort-wasm-simd-threaded.jsep.wasm',
+    'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/ort-wasm-simd.wasm',
+    'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/ort-wasm.wasm',
+    'ort-webgpu.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/ort-webgpu.wasm'
+  };
+  window.ort.env.wasm.numThreads = navigator.hardwareConcurrency || 4;
+  window.ort.env.wasm.simd = true;
   window.ort.env.webgpu.devicePreference = 'default';
 
   // Setup event handlers
