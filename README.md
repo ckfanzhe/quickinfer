@@ -1,19 +1,16 @@
-# ONNX YOLO Benchmark
+# Web YOLO Benchmark
 
 Browser-based YOLOv8 inference benchmark using ONNX Runtime Web.
 
-![ONNX YOLO Benchmark](screenshot.png)
+![Web YOLO Benchmark](screenshot.png)
 
 ## Features
 
 - Run YOLOv8 object detection directly in the browser
-- Support for multiple backends: Auto, WASM (CPU), WebGPU, WebGL
+- Support for multiple backends: WASM (CPU), WebGPU, WebGL
 - Multiple model sizes: YOLOv8n, YOLOv8s, YOLOv8m, YOLOv8l, YOLOv8x
 - Real-time performance metrics: preprocessing, inference, postprocessing
-- Download progress bar for model loading
-- Built-in example images for quick testing
 - Responsive design for mobile devices
-- Export detection results as JSON
 
 ## Usage
 
@@ -24,7 +21,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 in your browser.
+Open https://localhost:5173 in your browser.
 
 ### Build for GitHub Pages
 
@@ -36,10 +33,10 @@ The built files will be in the `dist` directory.
 
 ## Models
 
-Models are hosted on [ModelScope](https://www.modelscope.cn) to ensure proper CORS support for browser downloads.
+Models are hosted on [ModelScope/quick-infer-models](https://www.modelscope.cn/models/fanzhek/quick-infer-models) to ensure proper CORS support for browser downloads.
 
 Default models:
-- YOLOv8n (~6MB)
+- YOLOv8n (~12MB)
 - YOLOv8s (~43MB)
 - YOLOv8m (~99MB)
 - YOLOv8l (~167MB)
@@ -65,3 +62,8 @@ Upload ONNX models to your ModelScope repository.
 | WebGPU  | ✓      | ✓    | Partial | ✗      |
 
 WebGPU provides the best performance but requires browser support.
+
+[todo]
+- add repo in the web foot
+- yolov11\yolov26 support
+- sam3 support 

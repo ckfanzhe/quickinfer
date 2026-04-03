@@ -1,5 +1,5 @@
 {
-  "name": "onnx-yolo-benchmark",
+  "name": "web-yolo-benchmark",
   "version": "1.0.0",
   "description": "Browser-based YOLO inference benchmark using ONNX Runtime Web",
   "type": "module",
